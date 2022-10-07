@@ -14,7 +14,7 @@ import std/os
 const CELL_COUNT = 30000
 
 # The valid instructions, anything else is ignored
-# This also could easily be removed
+# This also could easily be removed if we wanted to
 type Instruction = enum
   IncMemPtr # >
   DecMemPtr # <
@@ -27,7 +27,7 @@ type Instruction = enum
 
 # The interpreter state type just holds information that it can use
 type BFInterpreterState = object
-  cells: seq[ptr int]
+  cells: seq[int]
   program: seq[Instruction]
   loopPositions: seq[int]
   currentCell: int
@@ -36,8 +36,7 @@ type BFInterpreterState = object
 # Simple initialisation function
 proc init(_: typedesc[BFInterpreterState], maxCells=CELL_COUNT): BFInterpreterState =
   result = BFInterpreterState()
-  for _ in 0..maxCells:
-    result.cells.add create(int)
+  result.cells = newSeqUninitialized[int](maxCells)
   result.currentCell = 0
   result.currentInstruction = 0
 
@@ -80,13 +79,14 @@ proc evalBfInstruction(state: var BFInterpreterState) =
     cast[ptr int](state.cells[state.currentCell])[] += 1
 
   of DecVal:
-    cast[ptr int](state.cells[state.currentCell])[] -= 1
+    var cellPointer = cast[ptr int](state.cells[state.currentCell])
+    cellPointer[] -= 1
 
   of LoopStart:
     state.loopPositions.add state.currentInstruction
 
   of LoopEnd:
-    if cast[ptr int](state.cells[state.currentCell])[] == 0:
+    if cast[ptr int](state.cells[state.currentCell])[] <= 0:
       state.loopPositions.del(state.loopPositions.len-1)
     else:
       state.currentInstruction = state.loopPositions[^1]
