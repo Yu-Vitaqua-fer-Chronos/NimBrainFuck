@@ -76,17 +76,16 @@ proc evalBfInstruction(state: var BFInterpreterState) =
     state.currentCell -= 1
 
   of IncVal:
-    cast[ptr int](state.cells[state.currentCell])[] += 1
+    state.cells[state.currentCell] += 1
 
   of DecVal:
-    var cellPointer = cast[ptr int](state.cells[state.currentCell])
-    cellPointer[] -= 1
+    state.cells[state.currentCell] -= 1
 
   of LoopStart:
     state.loopPositions.add state.currentInstruction
 
   of LoopEnd:
-    if cast[ptr int](state.cells[state.currentCell])[] <= 0:
+    if state.cells[state.currentCell] <= 0:
       state.loopPositions.del(state.loopPositions.len-1)
     else:
       state.currentInstruction = state.loopPositions[^1]
@@ -95,7 +94,7 @@ proc evalBfInstruction(state: var BFInterpreterState) =
     discard # Not implemented yet
 
   of PutChar:
-    stdout.write(cast[ptr int](state.cells[state.currentCell])[].char)
+    stdout.write(state.cells[state.currentCell].char)
     stdout.flushFile()
 
   else:
