@@ -10,7 +10,7 @@
 # Imports
 import std/os
 
-# The maximum cells we can have at once, as defined by the spec
+# The minimum amount of cells we provide by default, as defined by the spec
 const CELL_COUNT = 30000
 
 # The valid instructions, anything else is ignored
@@ -70,6 +70,10 @@ proc readBfFile(state: var BFInterpreterState, filename: string) =
 proc evalBfInstruction(state: var BFInterpreterState) =
   case state.program[state.currentInstruction]
   of IncMemPtr:
+    when defined(UNBOUNDED_CELLS):
+      if state.currentCell < state.cells.len:
+        state.cells.add 0
+
     state.currentCell += 1
 
   of DecMemPtr:
