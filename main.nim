@@ -8,10 +8,15 @@
 # . = like c putchar(). print 1 character to the console
 
 # Imports
-import std/os
+import std/[
+  terminal, # Used for `getch`
+  os        # Used for the command line
+]
 
-# The minimum amount of cells we provide by default, as defined by the spec
-const CELL_COUNT = 30000
+# The minimum amount of cells we provide by default
+const CELL_COUNT {.intdefine.} = 30000
+
+type CellType = byte
 
 # The valid instructions, anything else is ignored
 # This also could easily be removed if we wanted to
@@ -27,7 +32,7 @@ type Instruction = enum
 
 # The interpreter state type just holds information that it can use
 type BFInterpreterState = object
-  cells: seq[int]
+  cells: seq[CellType]
   program: seq[Instruction]
   loopPositions: seq[int]
   currentCell: int
@@ -36,7 +41,7 @@ type BFInterpreterState = object
 # Simple initialisation function
 proc init(_: typedesc[BFInterpreterState], maxCells=CELL_COUNT): BFInterpreterState =
   result = BFInterpreterState()
-  result.cells = newSeqUninitialized[int](maxCells)
+  result.cells = newSeqUninitialized[CellType](maxCells)
   result.currentCell = 0
   result.currentInstruction = 0
 
@@ -76,26 +81,68 @@ proc evalBfInstruction(state: var BFInterpreterState) =
 
     state.currentCell += 1
 
+    if state.currentCell > state.cells.len:
+      quit("Program exited as the end of the tape was reached!", 1)
+
   of DecMemPtr:
     state.currentCell -= 1
 
+    if state.currentCell < state.cells.len:
+      quit("Program exited as the tape uses negative indexes!", 1)
+
+
   of IncVal:
-    state.cells[state.currentCell] += 1
+    if state.cells[state.currentCell] == high(CellType):
+      state.cells[state.currentCell] = low(CellType)
+
+    else:
+      state.cells[state.currentCell] += 1
 
   of DecVal:
-    state.cells[state.currentCell] -= 1
+    if state.cells[state.currentCell] == low(CellType):
+      state.cells[state.currentCell] = high(CellType)
+
+    else:
+      state.cells[state.currentCell] -= 1
 
   of LoopStart:
-    state.loopPositions.add state.currentInstruction
+    if state.cells[state.currentCell] == 0:
+      # This ensures we don't exit prematurely
+      var nestDepth = 0
+
+      # Find the ending brace
+      while (state.program[state.currentInstruction] != LoopEnd) and nestDepth == 0:
+        state.currentInstruction += 1
+
+        #echo "loop start: ", nestDepth
+
+        # Find nested brackets
+        if state.program[state.currentInstruction] == LoopStart:
+          nestDepth += 1
+
+        elif state.program[state.currentInstruction] == LoopEnd:
+          nestDepth -= 1
 
   of LoopEnd:
-    if state.cells[state.currentCell] <= 0:
-      state.loopPositions.del(state.loopPositions.len-1)
-    else:
-      state.currentInstruction = state.loopPositions[^1]
+    if state.cells[state.currentCell] != 0:
+      # This ensures we don't exit prematurely
+      var nestDepth = 0
+
+      while (state.program[state.currentInstruction] != LoopStart) and nestDepth == 0:
+        # We have to go backwards to find the opening bracket
+        state.currentInstruction -= 1
+
+        #echo "loop end: ", nestDepth
+
+        # Find nested brackets
+        if state.program[state.currentInstruction] == LoopEnd:
+          nestDepth -= 1
+
+        elif state.program[state.currentInstruction] == LoopStart:
+          nestDepth += 1
 
   of GetChar:
-    discard # Not implemented yet
+    state.cells[state.currentCell] = getch().CellType
 
   of PutChar:
     stdout.write(state.cells[state.currentCell].char)
