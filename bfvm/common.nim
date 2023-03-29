@@ -8,12 +8,13 @@ const
 
 type
   Opcode* = enum
-    IncCell = 0.byte # +
+    IncCell = 1.byte # +
     DecCell          # -
     IncPtr           # >
     DecPtr           # <
-    LoopStart        # [
-    LoopEnd          # ]
+    Label            # {No Mapping}
+    GoToIfZ          # [
+    GoToIfNZ         # ]
     PutChr           # .
     GetChr           # ,
 
@@ -56,11 +57,15 @@ INCPTR <uint16>
 DECPTR <uint16>
   Moves the pointer to the left by <uint16>.
 
-LOOPSTART
-  The start of the loop, entered if the cell doesn't equal 0.
+LABEL <uint16>
+  A label just specifies a tagged position in the bytecode that can
+  be jumped to.
 
-LOOPEND
-  The end of the loop, exited if the cell is equal to 0.
+GOTOIFZ <uint16>
+  Go to a label if the current cell is equal to 0.
+
+GOTOIFNZ <uint16>
+  Go to a label if the current cell is not 0.
 
 PUTCHR
   Prints the current cell value in the cell to STDOUT.

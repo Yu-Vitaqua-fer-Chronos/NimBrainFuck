@@ -2,3 +2,4 @@ main
 interpreter/main
 bfvm/compiler
 bfvm/vm
+*.nbf

@@ -17,7 +17,7 @@ import std/[
 import ./common # Used so we can have more code reuse
 
 
-proc findMatchingEndBracket(position: int, code: seq[char]): int =
+proc findMatchingEndBracket(position: uint16, code: seq[char]): uint16 =
   var pos = position + 1
   var nest = 0
 
@@ -34,7 +34,7 @@ proc findMatchingEndBracket(position: int, code: seq[char]): int =
     pos += 1
 
 
-proc findMatchingStartBracket(position: int, code: seq[char]): int =
+proc findMatchingStartBracket(position: uint16, code: seq[char]): uint16 =
   var pos = position - 1
   var nest = 0
 
@@ -57,6 +57,9 @@ proc incOrDecOp(chr: char, op: Opcode, pos: var uint16, code: seq[char]): Instru
   while code[pos] == chr:
     count += 1
     pos += 1
+
+    if pos.int >= code.len:
+      break
 
   Instruction(op: op, ub2Val: count)
 
@@ -84,12 +87,16 @@ proc compileBf(strm: Stream, rawCode: string) =
         program.instrs.add incOrDecOp('<', Opcode.DecPtr, pos, code)
 
       of '[':
-        program.instrs.add Instruction(op: Opcode.LoopStart, ub2Val: 0)
+        let endB = findMatchingEndBracket(pos, code)
+        program.instrs.add Instruction(op: Opcode.GoToIfZ, ub2Val: endB)
+        program.instrs.add Instruction(op: Opcode.Label, ub2Val: pos)
 
         pos += 1
 
       of ']':
-        program.instrs.add Instruction(op: Opcode.LoopEnd, ub2Val: 0)
+        let startB = findMatchingStartBracket(pos, code)
+        program.instrs.add Instruction(op: Opcode.GoToIfNZ, ub2Val: startB)
+        program.instrs.add Instruction(op: Opcode.Label, ub2Val: pos)
 
         pos += 1
 
@@ -113,7 +120,7 @@ proc compileBf(strm: Stream, rawCode: string) =
     strm.write(instr.op)
 
     case instr.op
-      of {IncCell, DecCell, IncPtr, DecPtr}:
+      of {IncCell, DecCell, IncPtr, DecPtr, Label, GoToIfZ, GoToIfNZ}:
         strm.write(instr.ub2Val.toBigEndian)
 
       else:
