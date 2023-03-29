@@ -91,20 +91,20 @@ proc run*(filename: string) =
 
       of IncPtr:
         for i in uint16(1)..instr.ub2Val:
-          when defined(UNBOUNDED_CELLS):
+          when defined(UNBOUNDED_TAPE):
             if vmState.currentCell < vmState.cells.len:
               vmState.cells.add 0
 
           vmState.currentCell += 1
 
-          if (vmState.currentCell >= CELL_COUNT) and (not defined(UNBOUNDED_CELLS)):
+          if (vmState.currentCell >= CELL_COUNT) and (not defined(UNBOUNDED_TAPE)):
             quit("Program exited as the end of the tape was reached!", 1)
 
         vmState.currentInstruction += 1
 
       of DecPtr:
         for i in uint16(1)..instr.ub2Val:
-          vmState.currentCell += 1
+          vmState.currentCell -= 1
 
           if vmState.currentCell < 0:
             quit("Program exited as the start of the tape was reached!", 1)

@@ -88,15 +88,15 @@ proc compileBf(strm: Stream, rawCode: string) =
 
       of '[':
         let endB = findMatchingEndBracket(pos, code)
-        program.instrs.add Instruction(op: Opcode.GoToIfZ, ub2Val: endB)
         program.instrs.add Instruction(op: Opcode.Label, ub2Val: pos)
+        program.instrs.add Instruction(op: Opcode.GoToIfZ, ub2Val: endB)
 
         pos += 1
 
       of ']':
         let startB = findMatchingStartBracket(pos, code)
-        program.instrs.add Instruction(op: Opcode.GoToIfNZ, ub2Val: startB)
         program.instrs.add Instruction(op: Opcode.Label, ub2Val: pos)
+        program.instrs.add Instruction(op: Opcode.GoToIfNZ, ub2Val: startB)
 
         pos += 1
 
