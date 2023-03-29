@@ -51,6 +51,8 @@ proc readProgram(vmState: var BFVMState, strm: Stream) =
         instr.ub2Val = strm.readUint16().fromBigEndian()
         vmState.jumpTable[instr.ub2Val] = pos
 
+        pos += 1
+
       of {IncCell, DecCell, IncPtr, DecPtr, GoToIfZ, GoToIfNZ}:
         instr.ub2Val = strm.readUint16().fromBigEndian()
 
@@ -90,7 +92,7 @@ proc run*(filename: string) =
       of IncPtr:
         for i in uint16(1)..instr.ub2Val:
           when defined(UNBOUNDED_TAPE):
-            if vmState.currentCell < vmState.cells.len:
+            if vmState.currentCell >= vmState.cells.len:
               vmState.cells.add 0
 
           vmState.currentCell += 1

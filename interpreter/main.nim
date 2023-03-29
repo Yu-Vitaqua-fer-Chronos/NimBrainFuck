@@ -140,7 +140,7 @@ proc evalBfInstruction(state: var BFInterpreterState) =
   case state.program[state.currentInstruction]
   of IncMemPtr:
     when defined(UNBOUNDED_CELLS):
-      if state.currentCell < state.cells.len:
+      if state.currentCell >= state.cells.len:
         state.cells.add 0
 
     state.currentCell += 1
