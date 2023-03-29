@@ -71,8 +71,6 @@ proc run*(filename: string) =
   except IOError:
     quit("Couldn't read from file!", 1)
 
-  echo vmState.program
-
   while vmState.program.instrs.len.uint16 > vmState.currentInstruction:
     let instr = vmState.program.instrs[vmState.currentInstruction]
 
